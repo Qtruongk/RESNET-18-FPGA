@@ -1,0 +1,26 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+software/.venv/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Large Raw Datasets (2GB+ pickle & 90k raw PNGs)
+software/data/wafers.pkl
+software/data/LSWMD.pkl
+software/data/train/
+software/data/validation/
+software/data/test/
+*.pkl
+*.npz
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
