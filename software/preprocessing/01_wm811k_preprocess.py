@@ -132,17 +132,15 @@ def resolve_default_pkl_path() -> str:
     """Tự động dò tìm đường dẫn file wafers.pkl hoặc LSWMD.pkl trong dự án."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
+        os.path.join(script_dir, "..", "data", "LSWMD.pkl"),
+        os.path.join(script_dir, "..", "data", "wafers.pkl"),
         os.path.join(script_dir, "data", "LSWMD.pkl"),
         os.path.join(script_dir, "data", "wafers.pkl"),
-        os.path.join(script_dir, "..", "software", "data", "wafers.pkl"),
-        os.path.join(script_dir, "..", "software", "data", "LSWMD.pkl"),
-        os.path.join(script_dir, "..", "data", "wafers.pkl"),
-        os.path.join(script_dir, "..", "data", "LSWMD.pkl"),
     ]
     for path in candidates:
         if os.path.isfile(path):
             return os.path.abspath(path)
-    return os.path.abspath(candidates[2])
+    return os.path.abspath(candidates[1])
 
 
 def extract_label_str(raw_val) -> Optional[str]:
@@ -345,14 +343,11 @@ def parse_args():
 def main():
     args = parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(os.path.dirname(script_dir)).lower() == "software":
-        base_dir = os.path.abspath(os.path.join(script_dir, "..", "..", "phase1_golden_model"))
-    else:
-        base_dir = script_dir
+    software_dir = os.path.abspath(os.path.join(script_dir, ".."))
 
     pkl_path = args.pkl_path if args.pkl_path else resolve_default_pkl_path()
-    output_npz = args.output_npz if args.output_npz else os.path.join(base_dir, "data", "wm811k_64x64_int8.npz")
-    hw_test_dir = args.hw_test_dir if args.hw_test_dir else os.path.join(base_dir, "hw_vectors", "test_samples")
+    output_npz = args.output_npz if args.output_npz else os.path.join(software_dir, "data", "wm811k_64x64_int8.npz")
+    hw_test_dir = args.hw_test_dir if args.hw_test_dir else os.path.join(software_dir, "Explicit_Model", "hw_vectors", "test_samples")
 
     print("=" * 72)
     print("  BƯỚC 1: TIỀN XỬ LÝ DỮ LIỆU WM-811K (64x64 NEAREST-NEIGHBOR INT8)")

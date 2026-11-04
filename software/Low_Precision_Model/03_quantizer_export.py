@@ -662,15 +662,12 @@ def parse_args():
 def main():
     args = parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(os.path.dirname(script_dir)).lower() == "software":
-        base_dir = os.path.abspath(os.path.join(script_dir, "..", "..", "phase1_golden_model"))
-    else:
-        base_dir = script_dir
+    software_dir = os.path.abspath(os.path.join(script_dir, ".."))
 
-    ckpt_dir = os.path.join(base_dir, "checkpoints")
-    folded_ckpt = args.folded_ckpt if args.folded_ckpt else os.path.join(ckpt_dir, "resnet18_fp32_folded.pth")
-    npz_path = args.npz_path if args.npz_path else os.path.join(base_dir, "data", "wm811k_64x64_int8.npz")
-    hw_dir = args.hw_dir if args.hw_dir else os.path.join(base_dir, "hw_vectors")
+    ckpt_dir = os.path.join(script_dir, "checkpoints")
+    folded_ckpt = args.folded_ckpt if args.folded_ckpt else os.path.join(software_dir, "Training_Model", "checkpoints", "resnet18_fp32_folded.pth")
+    npz_path = args.npz_path if args.npz_path else os.path.join(software_dir, "data", "wm811k_64x64_int8.npz")
+    hw_dir = args.hw_dir if args.hw_dir else os.path.join(script_dir, "hw_vectors")
 
     device = torch.device(args.device)
     print("=" * 72)

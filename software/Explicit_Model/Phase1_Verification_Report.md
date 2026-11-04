@@ -78,3 +78,4 @@ python 03_quantizer_export.py --tm 16 --tn 16
 # Bước 4: Chạy Bộ Mô phỏng Phần cứng Bit-Accurate, xuất Golden Feature Maps & cập nhật Báo cáo
 python 04_bit_accurate_emulator.py
 ```
+

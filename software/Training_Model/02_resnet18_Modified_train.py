@@ -520,13 +520,10 @@ def parse_args():
 def main():
     args = parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(os.path.dirname(script_dir)).lower() == "software":
-        base_dir = os.path.abspath(os.path.join(script_dir, "..", "..", "phase1_golden_model"))
-    else:
-        base_dir = script_dir
+    software_dir = os.path.abspath(os.path.join(script_dir, ".."))
 
-    npz_path = args.npz_path if args.npz_path else os.path.join(base_dir, "data", "wm811k_64x64_int8.npz")
-    ckpt_dir = args.checkpoint_dir if args.checkpoint_dir else os.path.join(base_dir, "checkpoints")
+    npz_path = args.npz_path if args.npz_path else os.path.join(software_dir, "data", "wm811k_64x64_int8.npz")
+    ckpt_dir = args.checkpoint_dir if args.checkpoint_dir else os.path.join(script_dir, "checkpoints")
     os.makedirs(ckpt_dir, exist_ok=True)
 
     device = torch.device(args.device)
