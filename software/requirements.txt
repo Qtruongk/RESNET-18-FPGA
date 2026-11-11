@@ -1,0 +1,32 @@
+# ==============================================================================
+# Requirements for ResNet-18 FPGA Golden Model & WM-811K Classification
+# ==============================================================================
+
+# --- Deep Learning Framework ---
+# PyTorch: Định nghĩa mô hình ResNet-18, huấn luyện FP32 & calibration lượng tử hóa
+torch>=2.0.0
+torchvision>=0.15.0
+
+# --- Xử lý dữ liệu & Tính toán số học ---
+# NumPy: Thao tác ma trận, trượt cửa sổ sliding window, mô phỏng số nguyên INT8/INT32
+numpy>=1.24.0
+# Pandas: Đọc và trích xuất dữ liệu wafer từ file wafers.pkl / LSWMD.pkl
+pandas>=2.0.0
+# SciPy: Hỗ trợ tính toán khoa học
+scipy>=1.10.0
+# Scikit-learn: Phân chia tập dữ liệu (train_test_split), báo cáo phân loại (classification_report, confusion_matrix, f1_score)
+scikit-learn>=1.3.0
+
+# --- Xử lý ảnh (Computer Vision) ---
+# OpenCV: Resize wafer map giữ nguyên bản chất vật lý (cv2.INTER_NEAREST)
+opencv-python>=4.8.0
+# Pillow: Thư viện xử lý ảnh dự phòng khi thiếu OpenCV
+pillow>=9.0.0
+
+# --- Tiện ích & Trực quan hóa dữ liệu ---
+# tqdm: Thanh tiến trình khi huấn luyện và tiền xử lý
+tqdm>=4.65.0
+# Matplotlib & Seaborn: Vẽ biểu đồ ma trận nhầm lẫn, biểu đồ phân bố lỗi wafer
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
