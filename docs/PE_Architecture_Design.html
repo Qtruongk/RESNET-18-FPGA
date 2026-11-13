@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiến trúc Vi phần cứng Processing Element (PE Unit) - ResNet-18 FPGA</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 8mm 14mm 8mm 14mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10.5pt;
+            line-height: 1.38;
+            color: #111827;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 15.5pt;
+            color: #1e3a8a;
+            margin: 0 0 3px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .header h2 {
+            font-size: 11pt;
+            color: #374151;
+            font-weight: normal;
+            margin: 0 0 3px 0;
+        }
+        .header .meta {
+            font-size: 8.5pt;
+            color: #6b7280;
+            font-style: italic;
+        }
+        h3 {
+            font-size: 11pt;
+            color: #1e3a8a;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 2px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        p {
+            text-align: justify;
+            margin-top: 2px;
+            margin-bottom: 4px;
+        }
+        ul {
+            margin-top: 2px;
+            margin-bottom: 5px;
+            padding-left: 18px;
+        }
+        li {
+            margin-bottom: 2px;
+        }
+        .formula-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #1e3a8a;
+            padding: 5px 10px;
+            margin: 5px 0;
+            font-size: 9.5pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0;
+            font-size: 8.8pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 4px 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        code, .code-font {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 8.5pt;
+            color: #b91c1c;
+            background: #f1f5f9;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .diagram-container {
+            text-align: center;
+            margin: 6px 0;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px;
+        }
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 7.3pt;
+            line-height: 1.18;
+            overflow-x: auto;
+            white-space: pre;
+            color: #1f2937;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .kw { color: #2563eb; font-weight: bold; }
+        .typ { color: #0891b2; font-weight: bold; }
+        .cmt { color: #15803d; font-style: italic; }
+        .num { color: #d97706; }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== TRANG 1 ==================== -->
+    <div class="header">
+        <h1>Kiến trúc Vi phần cứng Processing Element (PE Unit)</h1>
+        <h2>Bộ Tăng tốc Mạng Nơ-ron Modified ResNet-18 trên FPGA Xilinx Zynq-7020</h2>
+        <div class="meta">Đặc tả Kỹ thuật Thiết kế RTL &bull; Phòng Nghiên cứu Bán dẫn &bull; Tháng 11/2026</div>
+    </div>
+
+    <h3>1. Tổng quan và Nguyên lý Hoạt động</h3>
+    <p>
+        Khối <strong>Processing Element (PE)</strong> là hạt nhân tính toán cơ sở trong mảng tính toán hai chiều 
+        <code>T_m &times; T_n = 16 &times; 16</code> (gồm 256 PEs) của bộ tăng tốc <strong>Modified ResNet-18</strong>. 
+        Nhiệm vụ của mỗi PE là thực thi chuỗi phép toán nhân-tích lũy (Multiply-Accumulate &mdash; MAC) số nguyên có dấu:
+    </p>
+    <div class="formula-box">
+        &bull; Khi <strong>clr_acc = 1</strong> (Bắt đầu Tile mới): &nbsp; <code>ACC_REG &lArr; in_act &times; in_w</code><br>
+        &bull; Khi <strong>clr_acc = 0 và en = 1</strong> (Cộng dồn): &nbsp; <code>ACC_REG &lArr; ACC_REG + (in_act &times; in_w)</code>
+    </div>
+    <ul>
+        <li><strong>Activation (<code>in_act</code>):</strong> Số nguyên có dấu 8-bit (Two's Complement INT8), miền giá trị <code>[-128, 127]</code>.</li>
+        <li><strong>Trọng số (<code>in_w</code>):</strong> Số nguyên có dấu 8-bit (Two's Complement INT8), miền giá trị <code>[-127, 127]</code>.</li>
+        <li><strong>Tích số (<code>r_prod</code>):</strong> Số nguyên có dấu 16-bit (Signed INT16), miền giá trị <code>[-16,256, 16,384]</code>.</li>
+        <li><strong>Bộ tích lũy (<code>out_acc</code>):</strong> Số nguyên có dấu 32-bit (Signed INT32), đảm bảo không tràn số (chứa tới 65,536 lần cộng dồn).</li>
+    </ul>
+
+    <h3>2. Sơ đồ Kiến trúc Chi tiết Khối PE (Detailed Block Diagram)</h3>
+    <p>
+        Sơ đồ vi kiến trúc dưới đây mô tả chính xác từng thanh ghi đồng bộ, cổng giao tiếp, bộ nhân và bộ tích lũy bên trong module <code>pe_unit.v</code>:
+    </p>
+
+    <div class="diagram-container">
+        <svg width="100%" height="280" viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="regGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#eff6ff"/>
+                    <stop offset="100%" stop-color="#dbeafe"/>
+                </linearGradient>
+                <linearGradient id="arithGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#fffbeb"/>
+                    <stop offset="100%" stop-color="#fef3c7"/>
+                </linearGradient>
+                <linearGradient id="muxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#fef2f2"/>
+                    <stop offset="100%" stop-color="#fee2e2"/>
+                </linearGradient>
+                <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 8 5 L 0 9 z" fill="#374151"/>
+                </marker>
+                <marker id="arrowRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 8 5 L 0 9 z" fill="#dc2626"/>
+                </marker>
+            </defs>
+
+            <!-- Background Divider Stages -->
+            <line x1="125" y1="10" x2="125" y2="265" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.2"/>
+            <text x="130" y="24" fill="#64748b" font-size="9.5" font-style="italic">Stage 1: Input Regs</text>
+
+            <line x1="285" y1="10" x2="285" y2="265" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.2"/>
+            <text x="290" y="24" fill="#64748b" font-size="9.5" font-style="italic">Stage 2: Multiplier</text>
+
+            <line x1="440" y1="10" x2="440" y2="265" stroke="#94a3b8" stroke-dasharray="4 4" stroke-width="1.2"/>
+            <text x="445" y="24" fill="#64748b" font-size="9.5" font-style="italic">Stage 3: Accumulator</text>
+
+            <!-- Cổng đầu vào Stage 0 -->
+            <text x="12" y="62" fill="#1e3a8a" font-family="Consolas, monospace" font-size="10.5" font-weight="bold">in_act[7:0]</text>
+            <text x="12" y="132" fill="#1e3a8a" font-family="Consolas, monospace" font-size="10.5" font-weight="bold">in_w[7:0]</text>
+            <text x="12" y="215" fill="#475569" font-family="Consolas, monospace" font-size="9.5">clk, rst_n, en</text>
+            <text x="12" y="242" fill="#dc2626" font-family="Consolas, monospace" font-size="9.5" font-weight="bold">clr_acc</text>
+
+            <!-- Đường nối từ input vào Stage 1 -->
+            <line x1="98" y1="58" x2="140" y2="58" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="98" y1="128" x2="140" y2="128" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Stage 1 Registers -->
+            <rect x="140" y="38" width="75" height="40" rx="4" fill="url(#regGrad)" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="177" y="55" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">ACT_REG</text>
+            <text x="177" y="70" text-anchor="middle" font-size="8.5" fill="#2563eb">8-bit</text>
+
+            <rect x="140" y="108" width="75" height="40" rx="4" fill="url(#regGrad)" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="177" y="125" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">W_REG</text>
+            <text x="177" y="140" text-anchor="middle" font-size="8.5" fill="#2563eb">8-bit</text>
+
+            <!-- Systolic Output: out_act -->
+            <line x1="177" y1="38" x2="177" y2="18" stroke="#374151" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <text x="182" y="16" fill="#1e3a8a" font-family="Consolas, monospace" font-size="9.5" font-weight="bold">out_act[7:0]</text>
+
+            <!-- Nối từ Stage 1 sang Stage 2 -->
+            <line x1="215" y1="58" x2="300" y2="84" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="215" y1="128" x2="300" y2="104" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Stage 2: Signed Multiplier -->
+            <rect x="300" y="70" width="100" height="48" rx="4" fill="url(#arithGrad)" stroke="#d97706" stroke-width="1.5"/>
+            <text x="350" y="90" text-anchor="middle" font-size="10" font-weight="bold" fill="#92400e">SIGNED MULT</text>
+            <text x="350" y="106" text-anchor="middle" font-size="8.5" fill="#b45309">8 &times; 8 &rarr; 16-bit</text>
+
+            <!-- Nối sang PROD_REG -->
+            <line x1="400" y1="94" x2="435" y2="94" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Stage 2: PROD_REG -->
+            <rect x="435" y="74" width="75" height="40" rx="4" fill="url(#regGrad)" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="472" y="91" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">PROD_REG</text>
+            <text x="472" y="106" text-anchor="middle" font-size="8.5" fill="#2563eb">16-bit</text>
+
+            <!-- Sign Extension block -->
+            <line x1="472" y1="114" x2="472" y2="142" stroke="#374151" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <rect x="425" y="142" width="95" height="26" rx="3" fill="#f8fafc" stroke="#64748b" stroke-width="1"/>
+            <text x="472" y="159" text-anchor="middle" font-size="8.5" fill="#334155">Sign-Extend (32b)</text>
+
+            <!-- Nối Sign-Extend vào Adder -->
+            <line x1="472" y1="168" x2="472" y2="190" stroke="#374151" stroke-width="2"/>
+            <line x1="472" y1="190" x2="510" y2="190" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Stage 3: Adder & MUX -->
+            <polygon points="445,230 475,220 475,250 445,240" fill="url(#muxGrad)" stroke="#dc2626" stroke-width="1.2"/>
+            <text x="460" y="238" font-size="7.5" font-weight="bold" fill="#991b1b">MUX</text>
+
+            <!-- Feedback loop từ ACC_REG về MUX -->
+            <line x1="590" y1="225" x2="590" y2="260" stroke="#374151" stroke-width="1.8"/>
+            <line x1="590" y1="260" x2="420" y2="260" stroke="#374151" stroke-width="1.8"/>
+            <line x1="420" y1="260" x2="420" y2="245" stroke="#374151" stroke-width="1.8"/>
+            <line x1="420" y1="245" x2="445" y2="245" stroke="#374151" stroke-width="1.8" marker-end="url(#arrow)"/>
+            <text x="425" y="240" font-size="8" fill="#374151">0</text>
+
+            <!-- Dây hằng số 0 đưa vào MUX (khi clr=1) -->
+            <text x="415" y="228" font-family="Consolas" font-size="8" fill="#475569">32'd0</text>
+            <line x1="435" y1="226" x2="445" y2="226" stroke="#374151" stroke-width="1" marker-end="url(#arrow)"/>
+            <text x="437" y="222" font-size="8" fill="#374151">1</text>
+
+            <!-- Dây clr_acc điều khiển MUX -->
+            <line x1="65" y1="240" x2="460" y2="240" stroke="#dc2626" stroke-dasharray="3 3" stroke-width="1.2"/>
+            <line x1="460" y1="240" x2="460" y2="250" stroke="#dc2626" stroke-width="1.2" marker-end="url(#arrowRed)"/>
+
+            <!-- MUX sang Adder -->
+            <line x1="475" y1="235" x2="510" y2="215" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Adder -->
+            <rect x="510" y="178" width="42" height="46" rx="4" fill="url(#arithGrad)" stroke="#d97706" stroke-width="1.5"/>
+            <text x="531" y="206" text-anchor="middle" font-size="15" font-weight="bold" fill="#92400e">+</text>
+
+            <!-- Adder vào ACC_REG -->
+            <line x1="552" y1="201" x2="565" y2="201" stroke="#374151" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- ACC_REG -->
+            <rect x="565" y="178" width="55" height="46" rx="4" fill="url(#regGrad)" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="592" y="199" text-anchor="middle" font-size="9" font-weight="bold" fill="#1e3a8a">ACC_REG</text>
+            <text x="592" y="214" text-anchor="middle" font-size="8" fill="#2563eb">32-bit</text>
+
+            <!-- Output: out_acc -->
+            <line x1="620" y1="201" x2="648" y2="201" stroke="#1e3a8a" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="653" y="205" fill="#1e3a8a" font-family="Consolas, monospace" font-size="10.5" font-weight="bold">out_acc[31:0]</text>
+
+            <!-- Valid delay path -->
+            <line x1="90" y1="215" x2="648" y2="215" stroke="#16a34a" stroke-dasharray="2 2" stroke-width="1.2"/>
+            <text x="653" y="222" fill="#16a34a" font-family="Consolas, monospace" font-size="10" font-weight="bold">valid_out</text>
+        </svg>
+    </div>
+
+    <!-- ==================== TRANG 2 ==================== -->
+    <div class="page-break"></div>
+
+    <h3>3. Bảng Đặc tả Chân Tín hiệu (Pinout Interface Specification)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 16%;">Tên Cổng</th>
+                <th style="width: 10%;">Hướng</th>
+                <th style="width: 10%;">Độ rộng</th>
+                <th style="width: 14%;">Kiểu dữ liệu</th>
+                <th>Chức năng Kỹ thuật Chi tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>clk</code></td>
+                <td>Input</td>
+                <td>1-bit</td>
+                <td>wire</td>
+                <td>Xung nhịp hệ thống toàn mạch (Tần số mục tiêu: 100MHz &ndash; 150MHz).</td>
+            </tr>
+            <tr>
+                <td><code>rst_n</code></td>
+                <td>Input</td>
+                <td>1-bit</td>
+                <td>wire</td>
+                <td>Reset bất đồng bộ tích cực mức thấp (Asynchronous Active-Low).</td>
+            </tr>
+            <tr>
+                <td><code>en</code></td>
+                <td>Input</td>
+                <td>1-bit</td>
+                <td>wire</td>
+                <td>Clock Enable: Cho phép tính toán. Khi <code>en=0</code>, giữ nguyên trạng thái thanh ghi.</td>
+            </tr>
+            <tr>
+                <td><code>clr_acc</code></td>
+                <td>Input</td>
+                <td>1-bit</td>
+                <td>wire</td>
+                <td><strong>Khởi tạo Tile mới:</strong> Khi <code>1</code>, chốt tích số mới vào <code>ACC_REG</code>; khi <code>0</code>, cộng dồn tiếp.</td>
+            </tr>
+            <tr>
+                <td><code>in_act[7:0]</code></td>
+                <td>Input</td>
+                <td>8-bit</td>
+                <td>signed wire</td>
+                <td>Dữ liệu điểm ảnh kích hoạt đầu vào (<i>X</i>). Định dạng bù 2 (Signed INT8).</td>
+            </tr>
+            <tr>
+                <td><code>in_w[7:0]</code></td>
+                <td>Input</td>
+                <td>8-bit</td>
+                <td>signed wire</td>
+                <td>Trọng số mạng nơ-ron (<i>W</i>). Định dạng bù 2 (Signed INT8).</td>
+            </tr>
+            <tr>
+                <td><code>out_act[7:0]</code></td>
+                <td>Output</td>
+                <td>8-bit</td>
+                <td>signed reg</td>
+                <td>Điểm ảnh chuyển tiếp sang PE kế bên (hỗ trợ truyền dữ liệu trong mảng 16 &times; 16).</td>
+            </tr>
+            <tr>
+                <td><code>out_acc[31:0]</code></td>
+                <td>Output</td>
+                <td>32-bit</td>
+                <td>signed reg</td>
+                <td>Kết quả tổng tích lũy INT32 chuyển tiếp sang khối Re-quantization (Scale & Shift).</td>
+            </tr>
+            <tr>
+                <td><code>valid_out</code></td>
+                <td>Output</td>
+                <td>1-bit</td>
+                <td>reg</td>
+                <td>Báo hiệu kết quả <code>out_acc</code> hợp lệ (sau đúng 2 chu kỳ trễ đường ống).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4. Giản đồ Định thời Đường ống (Pipeline Waveform Timing)</h3>
+    <p>
+        Mỗi phép tính tích chập hoàn tất qua đường ống 2 chu kỳ (2-Cycle Pipeline Latency) giúp tối đa hóa tần số cực đại <i>F</i><sub>max</sub>:
+    </p>
+
+    <div class="diagram-container">
+        <svg width="100%" height="185" viewBox="0 0 680 185" xmlns="http://www.w3.org/2000/svg">
+            <!-- Timeline Grid -->
+            <line x1="80" y1="15" x2="80" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="160" y1="15" x2="160" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="240" y1="15" x2="240" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="320" y1="15" x2="320" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="400" y1="15" x2="400" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="480" y1="15" x2="480" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="560" y1="15" x2="560" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+
+            <!-- Clock Labels -->
+            <text x="120" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T0</text>
+            <text x="200" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T1</text>
+            <text x="280" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T2</text>
+            <text x="360" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T3</text>
+            <text x="440" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T4</text>
+            <text x="520" y="14" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1e3a8a">T5</text>
+
+            <!-- clk -->
+            <text x="15" y="34" font-family="Consolas" font-size="9.5" fill="#334155">clk</text>
+            <path d="M 80,36 L 120,36 L 120,22 L 160,22 L 160,36 L 200,36 L 200,22 L 240,22 L 240,36 L 280,36 L 280,22 L 320,22 L 320,36 L 360,36 L 360,22 L 400,22 L 400,36 L 440,36 L 440,22 L 480,22 L 480,36 L 520,36 L 520,22 L 560,22 L 560,36" stroke="#2563eb" stroke-width="1.5" fill="none"/>
+
+            <!-- in_act & in_w -->
+            <text x="15" y="65" font-family="Consolas" font-size="9.5" fill="#334155">in_act, in_w</text>
+            <polygon points="80,67 88,57 152,57 160,67 152,77 88,77" fill="#eff6ff" stroke="#3b82f6"/>
+            <text x="120" y="70" text-anchor="middle" font-size="8.5" fill="#1e3a8a">X0, W0</text>
+            <polygon points="160,67 168,57 232,57 240,67 232,77 168,77" fill="#eff6ff" stroke="#3b82f6"/>
+            <text x="200" y="70" text-anchor="middle" font-size="8.5" fill="#1e3a8a">X1, W1</text>
+            <polygon points="240,67 248,57 312,57 320,67 312,77 248,77" fill="#eff6ff" stroke="#3b82f6"/>
+            <text x="280" y="70" text-anchor="middle" font-size="8.5" fill="#1e3a8a">X2, W2</text>
+
+            <!-- clr_acc -->
+            <text x="15" y="98" font-family="Consolas" font-size="9.5" fill="#dc2626">clr_acc</text>
+            <path d="M 80,103 L 160,103 L 160,88 L 240,88 L 240,103 L 560,103" stroke="#dc2626" stroke-width="1.5" fill="none"/>
+            <text x="200" y="84" text-anchor="middle" font-size="8" fill="#dc2626">clr=1 (Khởi tạo)</text>
+
+            <!-- PROD_REG -->
+            <text x="15" y="130" font-family="Consolas" font-size="9.5" fill="#d97706">PROD_REG</text>
+            <polygon points="160,130 168,120 232,120 240,130 232,140 168,140" fill="#fffbeb" stroke="#d97706"/>
+            <text x="200" y="133" text-anchor="middle" font-size="8.5" fill="#92400e">X0 &times; W0</text>
+            <polygon points="240,130 248,120 312,120 320,130 312,140 248,140" fill="#fffbeb" stroke="#d97706"/>
+            <text x="280" y="133" text-anchor="middle" font-size="8.5" fill="#92400e">X1 &times; W1</text>
+
+            <!-- ACC_REG -->
+            <text x="15" y="162" font-family="Consolas" font-size="9.5" fill="#1e3a8a">ACC_REG</text>
+            <polygon points="240,162 248,152 312,152 320,162 312,172 248,172" fill="#eff6ff" stroke="#1d4ed8"/>
+            <text x="280" y="165" text-anchor="middle" font-size="8" fill="#1e3a8a">X0 &times; W0</text>
+            <polygon points="320,162 328,152 392,152 400,162 392,172 328,172" fill="#eff6ff" stroke="#1d4ed8"/>
+            <text x="360" y="165" text-anchor="middle" font-size="7.5" fill="#1e3a8a">X0W0 + X1W1</text>
+        </svg>
+    </div>
+
+    <h3>5. Ánh xạ Tối ưu vào DSP48E1 (Xilinx Zynq-7020)</h3>
+    <p>
+        Khi tổng hợp trên <strong>Vivado Design Suite</strong>, cấu trúc của <code>pe_unit</code> được ánh xạ trực tiếp 1-1 
+        vào khối phần cứng chuyên dụng <strong>DSP48E1</strong>:
+    </p>
+    <ul>
+        <li>Cổng <strong>A (25-bit)</strong> nhận <code>in_act[7:0]</code> (mở rộng dấu 8-bit lên 25-bit).</li>
+        <li>Cổng <strong>B (18-bit)</strong> nhận <code>in_w[7:0]</code> (mở rộng dấu 8-bit lên 18-bit).</li>
+        <li>Bộ nhân 25 &times; 18 nội tại thực hiện nhân hai số có dấu; bộ cộng 48-bit nội tại thực hiện tích lũy <i>P</i> = <i>P</i> + <i>C</i>.</li>
+        <li>Khai thác toàn bộ thanh ghi nội (<code>AREG=1, BREG=1, MREG=1, PREG=1</code>) giúp giải phóng hoàn toàn tài nguyên LUT/FF ngoài fabric, hạn chế tối đa suy hao công suất động.</li>
+    </ul>
+
+    <!-- ==================== TRANG 3 ==================== -->
+    <div class="page-break"></div>
+
+    <h3>6. Mã Nguồn Verilog RTL Hoàn Chỉnh (<code>hardware/RTL/pe_unit.v</code>)</h3>
+    <p>
+        Khung mã nguồn Verilog HDL chuẩn công nghiệp, hoàn toàn tương thích và sẵn sàng tổng hợp (Synthesizable RTL):
+    </p>
+
+    <div class="code-block"><span class="cmt">// =============================================================================
+// Module: pe_unit.v
+// Architecture: 2-Cycle Pipelined INT8 Signed MAC Unit with INT32 Accumulator
+// Target Device: Xilinx Zynq-7020 (DSP48E1 Optimized)
+// =============================================================================</span>
+`timescale 1ns / 1ps
+
+<span class="kw">module</span> pe_unit (
+    <span class="kw">input</span>  <span class="typ">wire</span>               clk,        <span class="cmt">// Xung nhip he thong (100 - 150MHz)</span>
+    <span class="kw">input</span>  <span class="typ">wire</span>               rst_n,      <span class="cmt">// Reset bat dong bo tich cuc muc thap</span>
+    <span class="kw">input</span>  <span class="typ">wire</span>               en,         <span class="cmt">// Clock enable</span>
+    <span class="kw">input</span>  <span class="typ">wire</span>               clr_acc,    <span class="cmt">// Khoi tao tile moi (xoa bo tich luy)</span>
+    <span class="kw">input</span>  <span class="typ">wire signed</span> [<span class="num">7</span>:<span class="num">0</span>]  in_act,     <span class="cmt">// Activation INT8 co dau [-128, 127]</span>
+    <span class="kw">input</span>  <span class="typ">wire signed</span> [<span class="num">7</span>:<span class="num">0</span>]  in_w,       <span class="cmt">// Weight INT8 co dau [-127, 127]</span>
+    
+    <span class="kw">output reg  signed</span> [<span class="num">7</span>:<span class="num">0</span>]  out_act,    <span class="cmt">// Chuyen tiep activation sang PE ke ben</span>
+    <span class="kw">output reg  signed</span> [<span class="num">31</span>:<span class="num">0</span>] out_acc,    <span class="cmt">// Ket qua tich luy INT32</span>
+    <span class="kw">output reg</span>                valid_out   <span class="cmt">// Bao hieu out_acc hop le sau 2 chu ky</span>
+);
+
+    <span class="cmt">// --- PIPELINE REGISTERS ---</span>
+    <span class="typ">reg signed</span> [<span class="num">7</span>:<span class="num">0</span>]  r_act;
+    <span class="typ">reg signed</span> [<span class="num">7</span>:<span class="num">0</span>]  r_w;
+    <span class="typ">reg signed</span> [<span class="num">15</span>:<span class="num">0</span>] r_prod;
+    <span class="typ">reg</span>               val_pipe_0;
+    <span class="typ">reg</span>               val_pipe_1;
+    <span class="typ">reg</span>               clr_pipe;
+
+    <span class="cmt">// --- STAGE 1: INPUT REGISTRATION & SYSTOLIC FEEDTHROUGH ---</span>
+    <span class="kw">always</span> @(<span class="kw">posedge</span> clk <span class="kw">or negedge</span> rst_n) <span class="kw">begin</span>
+        <span class="kw">if</span> (!rst_n) <span class="kw">begin</span>
+            r_act      &lt;= <span class="num">8'sd0</span>;
+            r_w        &lt;= <span class="num">8'sd0</span>;
+            out_act    &lt;= <span class="num">8'sd0</span>;
+            clr_pipe   &lt;= <span class="num">1'b0</span>;
+            val_pipe_0 &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end else if</span> (en) <span class="kw">begin</span>
+            r_act      &lt;= in_act;
+            r_w        &lt;= in_w;
+            out_act    &lt;= in_act;          <span class="cmt">// Chuyen tiep sang PE hang xom</span>
+            clr_pipe   &lt;= clr_acc;
+            val_pipe_0 &lt;= <span class="num">1'b1</span>;
+        <span class="kw">end else begin</span>
+            val_pipe_0 &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end</span>
+    <span class="kw">end</span>
+
+    <span class="cmt">// --- STAGE 2: SIGNED MULTIPLICATION (INT8 x INT8 -> INT16) ---</span>
+    <span class="kw">always</span> @(<span class="kw">posedge</span> clk <span class="kw">or negedge</span> rst_n) <span class="kw">begin</span>
+        <span class="kw">if</span> (!rst_n) <span class="kw">begin</span>
+            r_prod     &lt;= <span class="num">16'sd0</span>;
+            val_pipe_1 &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end else if</span> (en) <span class="kw">begin</span>
+            r_prod     &lt;= r_act * r_w;    <span class="cmt">// Tu dong anh xa vao bo nhan DSP48E1</span>
+            val_pipe_1 &lt;= val_pipe_0;
+        <span class="kw">end else begin</span>
+            val_pipe_1 &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end</span>
+    <span class="kw">end</span>
+
+    <span class="cmt">// --- STAGE 3: 32-BIT ACCUMULATION WITH SIGN-EXTENSION ---</span>
+    <span class="typ">wire signed</span> [<span class="num">31</span>:<span class="num">0</span>] prod_ext = {{<span class="num">16</span>{r_prod[<span class="num">15</span>]}}, r_prod}; <span class="cmt">// Mo rong dau 16 -> 32 bit</span>
+
+    <span class="kw">always</span> @(<span class="kw">posedge</span> clk <span class="kw">or negedge</span> rst_n) <span class="kw">begin</span>
+        <span class="kw">if</span> (!rst_n) <span class="kw">begin</span>
+            out_acc   &lt;= <span class="num">32'sd0</span>;
+            valid_out &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end else if</span> (en) <span class="kw">begin</span>
+            <span class="kw">if</span> (clr_pipe) <span class="kw">begin</span>
+                out_acc &lt;= prod_ext;           <span class="cmt">// Nap tich so dau tien cua Tile</span>
+            <span class="kw">end else begin</span>
+                out_acc &lt;= out_acc + prod_ext;  <span class="cmt">// Tich luy cong don</span>
+            <span class="kw">end</span>
+            valid_out &lt;= val_pipe_1;
+        <span class="kw">end else begin</span>
+            valid_out &lt;= <span class="num">1'b0</span>;
+        <span class="kw">end</span>
+    <span class="kw">end</span>
+
+<span class="kw">endmodule</span></div>
+
+</body>
+</html>

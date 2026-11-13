@@ -1,0 +1,359 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, backgrounds, fit}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{array}
+
+% Định nghĩa màu sắc chuyên nghiệp
+\definecolor{primary}{RGB}{30, 58, 138}    % Xanh đậm
+\definecolor{secondary}{RGB}{14, 116, 144} % Xanh cyan
+\definecolor{accent}{RGB}{217, 119, 6}     % Cam đậm
+\definecolor{regcolor}{RGB}{219, 234, 254}  % Nền thanh ghi
+\definecolor{regborder}{RGB}{37, 99, 235}
+\definecolor{arithcolor}{RGB}{254, 243, 199}% Nền khối số học
+\definecolor{arithborder}{RGB}{217, 119, 6}
+\definecolor{muxcolor}{RGB}{254, 226, 226}  % Nền MUX
+\definecolor{muxborder}{RGB}{220, 38, 38}
+\definecolor{sigcolor}{RGB}{75, 85, 99}
+
+\title{\textbf{\Large KIẾN TRÚC VI PHẦN CỨNG PROCESSING ELEMENT (PE UNIT)}\\
+\large Thiết kế Khối Tính toán Cơ sở cho Bộ Tăng tốc Modified ResNet-18 trên FPGA Xilinx Zynq-7020}
+\author{\textbf{Phòng Nghiên cứu Bán dẫn / Đề tài Tăng tốc ResNet-18 FPGA}}
+\date{Tháng 11 Năm 2026}
+
+\begin{document}
+
+\maketitle
+
+\hrule
+\vspace{0.5cm}
+
+\section{Tổng quan và Nguyên lý Hoạt động của Khối PE}
+
+Khối **Processing Element (PE)** là hạt nhân tính toán cơ sở trong mảng tính toán $T_m \times T_n = 16 \times 16$ (gồm 256 PEs) của bộ tăng tốc mạng nơ-ron **Modified ResNet-18**. Nhiệm vụ chính của mỗi PE là thực thi chuỗi phép nhân-tích lũy (**Multiply-Accumulate -- MAC**) có dấu theo chuẩn số học nguyên:
+\begin{equation}
+    \text{acc}[t] = \begin{cases}
+        \text{in\_act}[t] \times \text{in\_w}[t], & \text{khi } \text{clr\_acc} = 1 \\
+        \text{acc}[t-1] + (\text{in\_act}[t] \times \text{in\_w}[t]), & \text{khi } \text{clr\_acc} = 0 \text{ và } \text{en} = 1
+    \end{cases}
+\end{equation}
+
+\subsection{Đặc tả Kỹ thuật Định dạng Dữ liệu}
+\begin{itemize}
+    \item \textbf{Activation đầu vào (\texttt{in\_act}):} Số nguyên có dấu 8-bit (Two's complement signed \texttt{INT8}), dải giá trị $[-128, 127]$.
+    \item \textbf{Trọng số đầu vào (\texttt{in\_w}):} Số nguyên có dấu 8-bit (Two's complement signed \texttt{INT8}), dải giá trị $[-127, 127]$.
+    \item \textbf{Tích số phép nhân (\texttt{mult\_res}):} Số nguyên có dấu 16-bit (Signed \texttt{INT16}), dải giá trị $[-16,256, 16,384]$.
+    \item \textbf{Thanh ghi tích lũy (\texttt{acc\_reg}):} Số nguyên có dấu 32-bit (Signed \texttt{INT32}), chống tràn hoàn toàn cho tối đa 65,536 lần tích lũy liên tục.
+\end{itemize}
+
+\vspace{0.5cm}
+\section{Sơ đồ Kiến trúc Chi tiết Khối PE (Block Diagram)}
+
+Sơ đồ dưới đây biểu diễn chi tiết các tầng đường ống (Pipeline Stages), các thanh ghi đồng bộ, bộ nhân, bộ cộng và luồng điều khiển bên trong module \texttt{pe\_unit.v}.
+
+\vspace{0.5cm}
+\begin{center}
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    >=Stealth,
+    node distance=1.5cm,
+    reg/.style={rectangle, draw=regborder, fill=regcolor, thick, minimum width=1.6cm, minimum height=1.0cm, align=center, font=\small\bfseries},
+    arith/.style={rectangle, draw=arithborder, fill=arithcolor, thick, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\small\bfseries},
+    mux/.style={trapezium, draw=muxborder, fill=muxcolor, thick, trapezium angle=60, minimum width=1.2cm, minimum height=0.8cm, rotate=-90, align=center, font=\scriptsize\bfseries},
+    port/.style={font=\small\ttfamily\bfseries, color=primary},
+    sig/.style={font=\scriptsize\ttfamily, color=sigcolor},
+    line/.style={draw, thick, color=gray!80!black, -{Stealth[length=2.5mm]}}
+]
+
+    % --- PIPELINE STAGE DIVIDERS ---
+    \draw[dashed, color=gray!50, line width=1pt] (-1.5, 3.5) -- (-1.5, -5.5) node[below, font=\scriptsize\bfseries, color=gray] {Stage 0 (Inputs)};
+    \draw[dashed, color=gray!50, line width=1pt] (2.2, 3.5) -- (2.2, -5.5) node[below, font=\scriptsize\bfseries, color=gray] {Stage 1 (Reg In)};
+    \draw[dashed, color=gray!50, line width=1pt] (6.8, 3.5) -- (6.8, -5.5) node[below, font=\scriptsize\bfseries, color=gray] {Stage 2 (Multiplier)};
+    \draw[dashed, color=gray!50, line width=1pt] (12.2, 3.5) -- (12.2, -5.5) node[below, font=\scriptsize\bfseries, color=gray] {Stage 3 (Accumulator)};
+
+    % --- TẦNG 0: CỔNG ĐẦU VÀO ---
+    \node[port] (in_act) at (-4, 1.8) {in\_act[7:0]};
+    \node[port] (in_w)   at (-4, -0.2) {in\_w[7:0]};
+    \node[port] (clk)    at (-4, -2.5) {clk};
+    \node[port] (rst_n)  at (-4, -3.3) {rst\_n};
+    \node[port] (en)     at (-4, -4.1) {en};
+    \node[port] (clr_acc) at (-4, -4.9) {clr\_acc};
+
+    % --- TẦNG 1: INPUT REGISTERS ---
+    \node[reg] (r_act) at (0.5, 1.8) {ACT\_REG\\{\scriptsize 8-bit}};
+    \node[reg] (r_w)   at (0.5, -0.2) {W\_REG\\{\scriptsize 8-bit}};
+
+    % Chuyển tiếp Systolic (Bypass Feedthrough)
+    \node[port] (out_act_pass) at (0.5, 3.2) {out\_act[7:0]};
+
+    % --- TẦNG 2: BỘ NHÂN INT8 x INT8 ---
+    \node[arith] (mult) at (4.5, 0.8) {SIGNED MULT\\$8 \times 8 \rightarrow 16$};
+    \node[reg] (r_prod) at (9.0, 0.8) {PROD\_REG\\{\scriptsize 16-bit}};
+
+    % Khối mở rộng dấu (Sign-Extend)
+    \node[arith, fill=gray!10, draw=gray!60, minimum width=1.8cm, minimum height=0.8cm] (sext) at (9.0, -1.2) {Sign-Extend\\{\scriptsize 16-bit $\rightarrow$ 32-bit}};
+
+    % --- TẦNG 3: BỘ CỘNG TÍCH LŨY (ACCUMULATOR) ---
+    \node[arith] (adder) at (11.5, -2.5) {ADDER\\{\scriptsize 32-bit}};
+    \node[reg, minimum height=1.4cm] (r_acc) at (14.5, -2.5) {ACC\_REG\\{\scriptsize 32-bit}};
+
+    % Bộ dồn kênh (Multiplexer cho clr_acc)
+    \node[mux] (mux_clr) at (11.5, -0.5) {};
+    \node at (11.5, -0.5) {\scriptsize MUX};
+    \node[above=0.2cm of mux_clr, font=\tiny\bfseries, color=red!80!black] {clr\_acc};
+    \node[font=\tiny] at (11.1, -0.2) {1};
+    \node[font=\tiny] at (11.1, -0.8) {0};
+
+    % Hằng số 0 đưa vào MUX khi clr_acc = 1
+    \node[font=\scriptsize\ttfamily] (zero) at (10.0, -0.2) {32'd0};
+
+    % Cổng đầu ra
+    \node[port] (out_acc) at (17.2, -2.5) {out\_acc[31:0]};
+    \node[port] (valid_out) at (17.2, -4.5) {valid\_out};
+
+    % Thanh ghi Valid trễ đường ống
+    \node[reg, minimum width=1.4cm, minimum height=0.6cm] (r_val1) at (0.5, -4.5) {\tiny VAL1};
+    \node[reg, minimum width=1.4cm, minimum height=0.6cm] (r_val2) at (4.5, -4.5) {\tiny VAL2};
+    \node[reg, minimum width=1.4cm, minimum height=0.6cm] (r_val3) at (9.0, -4.5) {\tiny VAL3};
+
+    % --- CÁC ĐƯỜNG DÂY LIÊN KẾT TÍN HIỆU ---
+    % Inputs vào Reg
+    \draw[line] (in_act) -- node[above, sig] {[7:0]} (r_act);
+    \draw[line] (in_w)   -- node[above, sig] {[7:0]} (r_w);
+
+    % Chuyển tiếp Systolic out_act
+    \draw[line] (r_act.north) -- node[right, sig] {feedthrough} (out_act_pass);
+
+    % Reg vào Bộ nhân
+    \draw[line] (r_act.east) -| node[above, sig, pos=0.3] {signed [7:0]} (mult.140);
+    \draw[line] (r_w.east)   -| node[below, sig, pos=0.3] {signed [7:0]} (mult.220);
+
+    % Bộ nhân vào Prod Reg
+    \draw[line] (mult.east) -- node[above, sig] {[15:0]} (r_prod.west);
+
+    % Prod Reg vào Sign-Extend
+    \draw[line] (r_prod.south) -- (sext.north);
+
+    % Sign-Extend vào MUX
+    \draw[line] (sext.east) -| (adder.140);
+    \draw[line] (zero) -- (11.1, -0.2);
+
+    % MUX Output vào Adder
+    \draw[line] (mux_clr.south) -- (adder.north);
+
+    % Adder vào ACC_REG
+    \draw[line] (adder.east) -- node[above, sig] {[31:0]} (r_acc.west);
+
+    % Đường phản hồi (Feedback Accumulation Loop)
+    \draw[line] (r_acc.south) -- ++(0, -1.2) -| (10.2, -0.8) -- (11.1, -0.8);
+    \node[sig] at (13.0, -3.9) {acc\_feedback [31:0]};
+
+    % ACC_REG ra ngoài
+    \draw[line] (r_acc.east) -- node[above, sig] {[31:0]} (out_acc);
+
+    % Chuỗi đường ống Valid
+    \draw[line] (en) -- (r_val1);
+    \draw[line] (r_val1) -- (r_val2);
+    \draw[line] (r_val2) -- (r_val3);
+    \draw[line] (r_val3) -- (valid_out);
+
+    % Tín hiệu clr_acc điều khiển MUX
+    \draw[line, color=red!70!black, dashed] (clr_acc) -| (11.5, 0.4) -- (mux_clr.north);
+
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.3cm}
+\section{Bảng Đặc tả Cổng Tín hiệu (Pinout \& Interface Specification)}
+
+Bảng dưới đây quy chuẩn đầy đủ danh sách cổng giao tiếp cho module \texttt{pe\_unit.v}:
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}llccl@{}}
+\toprule
+\textbf{Tên Cổng (Port)} & \textbf{Hướng} & \textbf{Độ rộng} & \textbf{Kiểu dữ liệu} & \textbf{Mô tả Kỹ thuật Chi tiết} \\ \midrule
+\texttt{clk}            & Input  & 1-bit  & Wire & Xung nhịp hệ thống (Target: 100MHz -- 150MHz). \\
+\texttt{rst\_n}          & Input  & 1-bit  & Wire & Tín hiệu reset tích cực mức thấp (Asynchronous Active-Low). \\
+\texttt{en}             & Input  & 1-bit  & Wire & Cho phép tính toán (Clock Enable). Khi \texttt{en=0}, đóng băng trạng thái. \\
+\texttt{clr\_acc}        & Input  & 1-bit  & Wire & \textbf{Xóa tích lũy:} Bắt đầu tính toán receptive field / Tile mới. \\
+                        &        &        &      & Nếu \texttt{clr\_acc=1}: $\text{ACC\_REG} \Leftarrow \text{PROD}$; nếu \texttt{0}: $\text{ACC\_REG} \Leftarrow \text{ACC} + \text{PROD}$. \\
+\texttt{in\_act[7:0]}   & Input  & 8-bit  & Signed Wire & Dữ liệu điểm ảnh kích hoạt ($X$). Định dạng bù 2 (Signed INT8). \\
+\texttt{in\_w[7:0]}     & Input  & 8-bit  & Signed Wire & Trọng số mạng ($W$). Định dạng bù 2 (Signed INT8). \\ \midrule
+\texttt{out\_act[7:0]}  & Output & 8-bit  & Signed Reg  & Điểm ảnh chuyển tiếp sang PE lân cận (hỗ trợ kiến trúc Systolic/Line). \\
+\texttt{out\_acc[31:0]} & Output & 32-bit & Signed Reg  & Kết quả tổng tích lũy INT32 chuyển tiếp sang khối Re-quantization. \\
+\texttt{valid\_out}     & Output & 1-bit  & Reg  & Báo hiệu dữ liệu đầu ra \texttt{out\_acc} hợp lệ sau 2 chu kỳ trễ pipeline. \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+\section{Giản đồ Định thời Đường ống (Pipeline Timing Diagram)}
+
+Module \texttt{pe\_unit.v} được thiết kế theo cấu trúc đường ống 2 chu kỳ trễ (\textbf{2-Cycle Pipeline Latency}) để đạt tần số hoạt động cao trên Xilinx Zynq-7020:
+\begin{itemize}
+    \item \textbf{Cycle $T_0$:} Nạp \texttt{in\_act} và \texttt{in\_w} vào thanh ghi đầu vào (\texttt{ACT\_REG}, \texttt{W\_REG}).
+    \item \textbf{Cycle $T_1$:} Bộ nhân số có dấu thực thi phép nhân $8\text{-bit} \times 8\text{-bit}$, chốt kết quả 16-bit vào \texttt{PROD\_REG}.
+    \item \textbf{Cycle $T_2$:} Thực hiện cộng dồn tích lũy vào \texttt{ACC\_REG[31:0]}, đồng thời kích hoạt \texttt{valid\_out = 1}.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.85, every node/.style={transform shape}, >=Stealth]
+    % Clock cycles
+    \foreach \x in {0, 2, 4, 6, 8, 10, 12, 14}
+        \draw[dotted, color=gray!40] (\x, 4.5) -- (\x, -3.5);
+
+    \node[font=\footnotesize\bfseries] at (-1.5, 4.0) {Clock Cycle};
+    \foreach \c/\x in {T0/1, T1/3, T2/5, T3/7, T4/9, T5/11, T6/13}
+        \node[font=\footnotesize\bfseries, color=primary] at (\x, 4.0) {\c};
+
+    % CLK waveform
+    \node[font=\scriptsize\ttfamily] at (-1.5, 3.2) {clk};
+    \draw[thick, color=blue!80!black] (0,3.0) \foreach \i in {1,...,7} { -- ++(1,0) -- ++(0,0.5) -- ++(1,0) -- ++(0,-0.5) };
+
+    % in_act
+    \node[font=\scriptsize\ttfamily] at (-1.5, 2.2) {in\_act};
+    \draw[thick] (0, 2.2) -- (0.5, 2.5) -- (2.5, 2.5) -- (2.7, 1.9) -- (4.5, 1.9) -- (4.7, 2.5) -- (6.7, 2.5);
+    \node[font=\tiny] at (1.5, 2.2) {$X_0$};
+    \node[font=\tiny] at (3.6, 2.2) {$X_1$};
+    \node[font=\tiny] at (5.7, 2.2) {$X_2$};
+
+    % in_w
+    \node[font=\scriptsize\ttfamily] at (-1.5, 1.4) {in\_w};
+    \draw[thick] (0, 1.4) -- (0.5, 1.7) -- (2.5, 1.7) -- (2.7, 1.1) -- (4.5, 1.1) -- (4.7, 1.7) -- (6.7, 1.7);
+    \node[font=\tiny] at (1.5, 1.4) {$W_0$};
+    \node[font=\tiny] at (3.6, 1.4) {$W_1$};
+    \node[font=\tiny] at (5.7, 1.4) {$W_2$};
+
+    % clr_acc
+    \node[font=\scriptsize\ttfamily, color=red!80!black] at (-1.5, 0.6) {clr\_acc};
+    \draw[thick, color=red!80!black] (0, 0.3) -- (4.5, 0.3) -- (4.5, 0.9) -- (6.5, 0.9) -- (6.5, 0.3) -- (14, 0.3);
+    \node[font=\tiny, color=red!80!black] at (5.5, 1.1) {Clear (Khởi tạo)};
+
+    % PROD_REG
+    \node[font=\scriptsize\ttfamily] at (-1.5, -0.4) {PROD\_REG};
+    \draw[thick, color=accent] (0, -0.4) -- (2.5, -0.4) -- (2.7, -0.1) -- (4.7, -0.1) -- (4.9, -0.7) -- (6.9, -0.7);
+    \node[font=\tiny] at (3.7, -0.4) {$X_0 \cdot W_0$};
+    \node[font=\tiny] at (5.9, -0.4) {$X_1 \cdot W_1$};
+
+    % ACC_REG
+    \node[font=\scriptsize\ttfamily, color=primary] at (-1.5, -1.6) {ACC\_REG};
+    \draw[thick, color=primary] (0, -1.6) -- (4.5, -1.6) -- (4.7, -1.2) -- (6.7, -1.2) -- (6.9, -2.0) -- (8.9, -2.0);
+    \node[font=\tiny] at (5.7, -1.6) {$X_0 W_0$};
+    \node[font=\tiny] at (7.9, -1.6) {$X_0 W_0 + X_1 W_1$};
+
+    % valid_out
+    \node[font=\scriptsize\ttfamily] at (-1.5, -2.8) {valid\_out};
+    \draw[thick, color=green!60!black] (0, -3.0) -- (4.5, -3.0) -- (4.5, -2.5) -- (14, -2.5);
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.3cm}
+\section{Khả năng Ánh xạ Tối ưu vào DSP48E1 (Xilinx Zynq-7020)}
+
+Module \texttt{pe\_unit} được thiết kế để công cụ tổng hợp (**Vivado Synthesis**) tự động ánh xạ trực tiếp 1-1 vào khối phần cứng chuyên dụng **DSP48E1** của Xilinx:
+\begin{itemize}
+    \item Cổng $A$ (25-bit) $\leftarrow$ Đưa \texttt{in\_act[7:0]} (mở rộng dấu 8-bit lên 25-bit).
+    \item Cổng $B$ (18-bit) $\leftarrow$ Đưa \texttt{in\_w[7:0]} (mở rộng dấu 8-bit lên 18-bit).
+    \item Bộ nhân nội tại $25 \times 18$ tính toán $P = A \times B$.
+    \item Bộ cộng 48-bit nội tại thực hiện tích lũy $P = P + C$ hoặc $P = P + P_{\text{feedback}}$.
+\end{itemize}
+Nhờ tận dụng thanh ghi nội của DSP48E1 (\texttt{AREG=1, BREG=1, MREG=1, PREG=1}), thiết kế không tiêu tốn thêm bất kỳ tài nguyên LUT/FF phụ nào ngoài fabric, đồng thời giảm thiểu công suất tiêu thụ động.
+
+\vspace{0.5cm}
+\section{Mã Nguồn Mẫu Chuẩn Verilog HDL (\texttt{pe\_unit.v})}
+
+Người thiết kế phần cứng có thể sử dụng trực tiếp khung mã nguồn chuẩn công nghiệp dưới đây để hiện thực hóa sơ đồ kiến trúc:
+
+\begin{lstlisting}[language=Verilog, basicstyle=\ttfamily\scriptsize, numbers=left, numberstyle=\tiny, frame=single, backgroundcolor=\color{gray!5}, keywordstyle=\color{blue}\bfseries, commentstyle=\color{green!50!black}\itshape]
+// =============================================================================
+// Module: pe_unit.v
+// Architecture: 2-Cycle Pipelined INT8 Signed MAC Unit with INT32 Accumulator
+// Target Device: Xilinx Zynq-7020 (DSP48E1 Optimized)
+// =============================================================================
+`timescale 1ns / 1ps
+
+module pe_unit (
+    input  wire               clk,        // Xung nhip he thong
+    input  wire               rst_n,      // Reset tich cuc muc thap (async)
+    input  wire               en,         // Clock enable
+    input  wire               clr_acc,    // Xoa bo tich luy (khoi tao tile moi)
+    input  wire signed [7:0]  in_act,     // Activation INT8 co dau [-128, 127]
+    input  wire signed [7:0]  in_w,       // Weight INT8 co dau [-127, 127]
+    
+    output reg  signed [7:0]  out_act,    // Chuyen tiep activation sang PE ke
+    output reg  signed [31:0] out_acc,    // Ket qua tich luy INT32
+    output reg                valid_out   // Co bao hieu out_acc hop le
+);
+
+    // --- PIPELINE REGISTERS ---
+    reg signed [7:0]  r_act;
+    reg signed [7:0]  r_w;
+    reg signed [15:0] r_prod;
+    reg               val_pipe_0;
+    reg               val_pipe_1;
+    reg               clr_pipe;
+
+    // --- STAGE 1: INPUT REGISTRATION & PASS-THROUGH ---
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            r_act      <= 8'sd0;
+            r_w        <= 8'sd0;
+            out_act    <= 8'sd0;
+            clr_pipe   <= 1'b0;
+            val_pipe_0 <= 1'b0;
+        end else if (en) begin
+            r_act      <= in_act;
+            r_w        <= in_w;
+            out_act    <= in_act;          // Systolic feedthrough
+            clr_pipe   <= clr_acc;
+            val_pipe_0 <= 1'b1;
+        end else begin
+            val_pipe_0 <= 1'b0;
+        end
+    end
+
+    // --- STAGE 2: SIGNED MULTIPLICATION (INT8 x INT8 -> INT16) ---
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            r_prod     <= 16'sd0;
+            val_pipe_1 <= 1'b0;
+        end else if (en) begin
+            r_prod     <= r_act * r_w;    // Tu dong map vao DSP48E1 Multiplier
+            val_pipe_1 <= val_pipe_0;
+        end else begin
+            val_pipe_1 <= 1'b0;
+        end
+    end
+
+    // --- STAGE 3: ACCUMULATION (INT32) WITH CLEAR LOGIC ---
+    wire signed [31:0] prod_ext = {{16{r_prod[15]}}, r_prod}; // Sign-Extension
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            out_acc   <= 32'sd0;
+            valid_out <= 1'b0;
+        end else if (en) begin
+            if (clr_pipe) begin
+                out_acc <= prod_ext;               // Nap gia tri dau tien cua Tile
+            end else begin
+                out_acc <= out_acc + prod_ext;      // Tich luy cong don
+            end
+            valid_out <= val_pipe_1;
+        end else begin
+            valid_out <= 1'b0;
+        end
+    end
+
+endmodule
+\end{lstlisting}
+
+\end{document}
+
