@@ -43,9 +43,9 @@ Tài liệu này mô tả chuẩn đối chiếu **Phase 1 Golden Model** của 
   $$S_w = \frac{\max(|W_{\text{fold}}|)}{127}, \quad q_w = \text{clip}\left(\text{round}\left(\frac{W_{\text{fold}}}{S_w}\right), -127, 127\right)$$
   $$S_b = S_x \cdot S_w, \quad q_b = \text{round}\left(\frac{b_{\text{fold}}}{S_x \cdot S_w}\right)$$
 - **Tái lượng tử hóa Nhân + Dịch phải (Multiplier + Bit-Shift):**
-  $$M_{\text{real}} = \frac{S_x \cdot S_w}{S_y} \approx \frac{M_0}{2^n}, \quad q_y = \text{clip}\left((\text{acc\_int32} \cdot M_0 + 2^{n-1}) \gg n, -128, 127\right)$$
+  $$M_{\text{real}} = \frac{S_x \cdot S_w}{S_y} \approx \frac{M_0}{2^n}, \quad q_y = \text{clip}\left((\text{acc} \cdot M_0 + 2^{n-1}) \gg n, -128, 127\right)$$
 - **Căn chỉnh Nhánh Cộng Tắt (Residual Shortcut Alignment):**
-  $$q_{\text{block\_out}} = \text{ReLU}\left( \text{clip}\left( \left[(\text{acc}_{\text{conv2}} \cdot M_{\text{conv2}} + 2^{n_1-1}) \gg n_1\right] + \left[(q_{x\_\text{shortcut}} \cdot M_{\text{sc}} + 2^{n_2-1}) \gg n_2\right], \ 0, \ 127 \right) \right)$$
+  $$q_{\text{block\_out}} = \text{ReLU}\left( \text{clip}\left( \left[(\text{acc}_{\text{conv2}} \cdot M_{\text{conv2}} + 2^{n_1-1}) \gg n_1\right] + \left[(q_{\text{shortcut}} \cdot M_{\text{sc}} + 2^{n_2-1}) \gg n_2\right], \ 0, \ 127 \right) \right)$$
 
 ---
 
