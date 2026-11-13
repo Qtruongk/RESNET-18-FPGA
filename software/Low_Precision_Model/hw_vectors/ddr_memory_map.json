@@ -1,0 +1,748 @@
+{
+    "tiling_tm": 16,
+    "tiling_tn": 16,
+    "total_bytes": 11174912,
+    "layers": [
+        {
+            "layer_index": 1,
+            "name": "stem_conv1",
+            "orig_weight_shape": [
+                64,
+                1,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                4,
+                1,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                64
+            ],
+            "s_in": 0.007874015748031496,
+            "s_w": 0.04917269053421621,
+            "s_b": 0.0003871865396394977,
+            "s_out": 0.10043735954705185,
+            "M0": 32338,
+            "shift_n": 23,
+            "w_hex_file": "layer01_stem_conv1_w.hex",
+            "b_hex_file": "layer01_stem_conv1_b.hex",
+            "ddr_byte_offset": 0,
+            "ddr_byte_length": 9216
+        },
+        {
+            "layer_index": 2,
+            "name": "s1b0_conv1",
+            "orig_weight_shape": [
+                64,
+                64,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                4,
+                4,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                64
+            ],
+            "s_in": 0.10043735954705185,
+            "s_w": 0.0010945680807894608,
+            "s_b": 0.00010993552787897757,
+            "s_out": 0.07428650593194436,
+            "M0": 24828,
+            "shift_n": 24,
+            "w_hex_file": "layer02_s1b0_conv1_w.hex",
+            "b_hex_file": "layer02_s1b0_conv1_b.hex",
+            "ddr_byte_offset": 9216,
+            "ddr_byte_length": 36864
+        },
+        {
+            "layer_index": 3,
+            "name": "s1b0_conv2",
+            "orig_weight_shape": [
+                64,
+                64,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                4,
+                4,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                64
+            ],
+            "s_in": 0.07428650593194436,
+            "s_w": 0.0023150129581060936,
+            "s_b": 0.00017197422384487637,
+            "s_out": 0.12966896417572743,
+            "M0": 22251,
+            "shift_n": 24,
+            "w_hex_file": "layer03_s1b0_conv2_w.hex",
+            "b_hex_file": "layer03_s1b0_conv2_b.hex",
+            "ddr_byte_offset": 46080,
+            "ddr_byte_length": 36864
+        },
+        {
+            "layer_index": 4,
+            "name": "s1b1_conv1",
+            "orig_weight_shape": [
+                64,
+                64,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                4,
+                4,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                64
+            ],
+            "s_in": 0.12966896417572743,
+            "s_w": 0.0009540292456394105,
+            "s_b": 0.00012370798407541298,
+            "s_out": 0.08582612285463828,
+            "M0": 24182,
+            "shift_n": 24,
+            "w_hex_file": "layer04_s1b1_conv1_w.hex",
+            "b_hex_file": "layer04_s1b1_conv1_b.hex",
+            "ddr_byte_offset": 82944,
+            "ddr_byte_length": 36864
+        },
+        {
+            "layer_index": 5,
+            "name": "s1b1_conv2",
+            "orig_weight_shape": [
+                64,
+                64,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                4,
+                4,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                64
+            ],
+            "s_in": 0.08582612285463828,
+            "s_w": 0.0011531116924886628,
+            "s_b": 9.896710578465186e-05,
+            "s_out": 0.15139570761853316,
+            "M0": 21934,
+            "shift_n": 25,
+            "w_hex_file": "layer05_s1b1_conv2_w.hex",
+            "b_hex_file": "layer05_s1b1_conv2_b.hex",
+            "ddr_byte_offset": 119808,
+            "ddr_byte_length": 36864
+        },
+        {
+            "layer_index": 6,
+            "name": "s2b0_conv1",
+            "orig_weight_shape": [
+                128,
+                64,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                8,
+                4,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                128
+            ],
+            "s_in": 0.15139570761853316,
+            "s_w": 0.0009041375766588947,
+            "s_b": 0.00013688254820277913,
+            "s_out": 0.09743227921132966,
+            "M0": 23570,
+            "shift_n": 24,
+            "w_hex_file": "layer06_s2b0_conv1_w.hex",
+            "b_hex_file": "layer06_s2b0_conv1_b.hex",
+            "ddr_byte_offset": 156672,
+            "ddr_byte_length": 73728
+        },
+        {
+            "layer_index": 7,
+            "name": "s2b0_conv2",
+            "orig_weight_shape": [
+                128,
+                128,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                8,
+                8,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                128
+            ],
+            "s_in": 0.09743227921132966,
+            "s_w": 0.0009221333687699686,
+            "s_b": 8.98455558560796e-05,
+            "s_out": 0.17083103450264517,
+            "M0": 17647,
+            "shift_n": 25,
+            "w_hex_file": "layer07_s2b0_conv2_w.hex",
+            "b_hex_file": "layer07_s2b0_conv2_b.hex",
+            "ddr_byte_offset": 230400,
+            "ddr_byte_length": 147456
+        },
+        {
+            "layer_index": 8,
+            "name": "s2b0_shortcut",
+            "orig_weight_shape": [
+                128,
+                64,
+                1,
+                1
+            ],
+            "tiled_weight_shape": [
+                8,
+                4,
+                1,
+                1,
+                16,
+                16
+            ],
+            "bias_shape": [
+                128
+            ],
+            "s_in": 0.15139570761853316,
+            "s_w": 0.00350245364069,
+            "s_b": 0.0005302564473333702,
+            "s_out": 0.17083103450264517,
+            "M0": 26038,
+            "shift_n": 23,
+            "w_hex_file": "layer08_s2b0_shortcut_w.hex",
+            "b_hex_file": "layer08_s2b0_shortcut_b.hex",
+            "ddr_byte_offset": 377856,
+            "ddr_byte_length": 8192
+        },
+        {
+            "layer_index": 9,
+            "name": "s2b1_conv1",
+            "orig_weight_shape": [
+                128,
+                128,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                8,
+                8,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                128
+            ],
+            "s_in": 0.17083103450264517,
+            "s_w": 0.0005466713914721031,
+            "s_b": 9.338843933817988e-05,
+            "s_out": 0.0818038549948865,
+            "M0": 19153,
+            "shift_n": 24,
+            "w_hex_file": "layer09_s2b1_conv1_w.hex",
+            "b_hex_file": "layer09_s2b1_conv1_b.hex",
+            "ddr_byte_offset": 386048,
+            "ddr_byte_length": 147456
+        },
+        {
+            "layer_index": 10,
+            "name": "s2b1_conv2",
+            "orig_weight_shape": [
+                128,
+                128,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                8,
+                8,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                128
+            ],
+            "s_in": 0.0818038549948865,
+            "s_w": 0.0006859218041727862,
+            "s_b": 5.611104780638154e-05,
+            "s_out": 0.14921765064629983,
+            "M0": 25235,
+            "shift_n": 26,
+            "w_hex_file": "layer10_s2b1_conv2_w.hex",
+            "b_hex_file": "layer10_s2b1_conv2_b.hex",
+            "ddr_byte_offset": 533504,
+            "ddr_byte_length": 147456
+        },
+        {
+            "layer_index": 11,
+            "name": "s3b0_conv1",
+            "orig_weight_shape": [
+                256,
+                128,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                16,
+                8,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                256
+            ],
+            "s_in": 0.14921765064629983,
+            "s_w": 0.0005530923839629166,
+            "s_b": 8.253114612530761e-05,
+            "s_out": 0.07533894936869463,
+            "M0": 18379,
+            "shift_n": 24,
+            "w_hex_file": "layer11_s3b0_conv1_w.hex",
+            "b_hex_file": "layer11_s3b0_conv1_b.hex",
+            "ddr_byte_offset": 680960,
+            "ddr_byte_length": 294912
+        },
+        {
+            "layer_index": 12,
+            "name": "s3b0_conv2",
+            "orig_weight_shape": [
+                256,
+                256,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                16,
+                16,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                256
+            ],
+            "s_in": 0.07533894936869463,
+            "s_w": 0.0007124276259752709,
+            "s_b": 5.367354884221025e-05,
+            "s_out": 0.1463468957135058,
+            "M0": 24613,
+            "shift_n": 26,
+            "w_hex_file": "layer12_s3b0_conv2_w.hex",
+            "b_hex_file": "layer12_s3b0_conv2_b.hex",
+            "ddr_byte_offset": 975872,
+            "ddr_byte_length": 589824
+        },
+        {
+            "layer_index": 13,
+            "name": "s3b0_shortcut",
+            "orig_weight_shape": [
+                256,
+                128,
+                1,
+                1
+            ],
+            "tiled_weight_shape": [
+                16,
+                8,
+                1,
+                1,
+                16,
+                16
+            ],
+            "bias_shape": [
+                256
+            ],
+            "s_in": 0.14921765064629983,
+            "s_w": 0.00279996596922086,
+            "s_b": 0.0004178043438167266,
+            "s_out": 0.1463468957135058,
+            "M0": 23949,
+            "shift_n": 23,
+            "w_hex_file": "layer13_s3b0_shortcut_w.hex",
+            "b_hex_file": "layer13_s3b0_shortcut_b.hex",
+            "ddr_byte_offset": 1565696,
+            "ddr_byte_length": 32768
+        },
+        {
+            "layer_index": 14,
+            "name": "s3b1_conv1",
+            "orig_weight_shape": [
+                256,
+                256,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                16,
+                16,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                256
+            ],
+            "s_in": 0.1463468957135058,
+            "s_w": 0.0005096209448153578,
+            "s_b": 7.458144326431146e-05,
+            "s_out": 0.06372312110240065,
+            "M0": 19636,
+            "shift_n": 24,
+            "w_hex_file": "layer14_s3b1_conv1_w.hex",
+            "b_hex_file": "layer14_s3b1_conv1_b.hex",
+            "ddr_byte_offset": 1598464,
+            "ddr_byte_length": 589824
+        },
+        {
+            "layer_index": 15,
+            "name": "s3b1_conv2",
+            "orig_weight_shape": [
+                256,
+                256,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                16,
+                16,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                256
+            ],
+            "s_in": 0.06372312110240065,
+            "s_w": 0.0003849844939596071,
+            "s_b": 2.4532413531134474e-05,
+            "s_out": 0.12356701798326387,
+            "M0": 26647,
+            "shift_n": 27,
+            "w_hex_file": "layer15_s3b1_conv2_w.hex",
+            "b_hex_file": "layer15_s3b1_conv2_b.hex",
+            "ddr_byte_offset": 2188288,
+            "ddr_byte_length": 589824
+        },
+        {
+            "layer_index": 16,
+            "name": "s4b0_conv1",
+            "orig_weight_shape": [
+                512,
+                256,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                32,
+                16,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                512
+            ],
+            "s_in": 0.12356701798326387,
+            "s_w": 0.00044208999693863034,
+            "s_b": 5.462774260193681e-05,
+            "s_out": 0.07586518986018624,
+            "M0": 24161,
+            "shift_n": 25,
+            "w_hex_file": "layer16_s4b0_conv1_w.hex",
+            "b_hex_file": "layer16_s4b0_conv1_b.hex",
+            "ddr_byte_offset": 2778112,
+            "ddr_byte_length": 1179648
+        },
+        {
+            "layer_index": 17,
+            "name": "s4b0_conv2",
+            "orig_weight_shape": [
+                512,
+                512,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                32,
+                32,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                512
+            ],
+            "s_in": 0.07586518986018624,
+            "s_w": 0.0004556852825513975,
+            "s_b": 3.457065047725438e-05,
+            "s_out": 0.11749459814837598,
+            "M0": 19746,
+            "shift_n": 26,
+            "w_hex_file": "layer17_s4b0_conv2_w.hex",
+            "b_hex_file": "layer17_s4b0_conv2_b.hex",
+            "ddr_byte_offset": 3957760,
+            "ddr_byte_length": 2359296
+        },
+        {
+            "layer_index": 18,
+            "name": "s4b0_shortcut",
+            "orig_weight_shape": [
+                512,
+                256,
+                1,
+                1
+            ],
+            "tiled_weight_shape": [
+                32,
+                16,
+                1,
+                1,
+                16,
+                16
+            ],
+            "bias_shape": [
+                512
+            ],
+            "s_in": 0.12356701798326387,
+            "s_w": 0.0021333769550473673,
+            "s_b": 0.0002636150285694188,
+            "s_out": 0.11749459814837598,
+            "M0": 18821,
+            "shift_n": 23,
+            "w_hex_file": "layer18_s4b0_shortcut_w.hex",
+            "b_hex_file": "layer18_s4b0_shortcut_b.hex",
+            "ddr_byte_offset": 6317056,
+            "ddr_byte_length": 131072
+        },
+        {
+            "layer_index": 19,
+            "name": "s4b1_conv1",
+            "orig_weight_shape": [
+                512,
+                512,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                32,
+                32,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                512
+            ],
+            "s_in": 0.11749459814837598,
+            "s_w": 0.0002636473303235422,
+            "s_b": 3.097713712925673e-05,
+            "s_out": 0.09030522323968843,
+            "M0": 23020,
+            "shift_n": 26,
+            "w_hex_file": "layer19_s4b1_conv1_w.hex",
+            "b_hex_file": "layer19_s4b1_conv1_b.hex",
+            "ddr_byte_offset": 6448128,
+            "ddr_byte_length": 2359296
+        },
+        {
+            "layer_index": 20,
+            "name": "s4b1_conv2",
+            "orig_weight_shape": [
+                512,
+                512,
+                3,
+                3
+            ],
+            "tiled_weight_shape": [
+                32,
+                32,
+                3,
+                3,
+                16,
+                16
+            ],
+            "bias_shape": [
+                512
+            ],
+            "s_in": 0.09030522323968843,
+            "s_w": 0.00034901532014523903,
+            "s_b": 3.151790639978714e-05,
+            "s_out": 0.15616799902728223,
+            "M0": 27088,
+            "shift_n": 27,
+            "w_hex_file": "layer20_s4b1_conv2_w.hex",
+            "b_hex_file": "layer20_s4b1_conv2_b.hex",
+            "ddr_byte_offset": 8807424,
+            "ddr_byte_length": 2359296
+        },
+        {
+            "layer_index": 21,
+            "name": "fc",
+            "orig_weight_shape": [
+                9,
+                512
+            ],
+            "tiled_weight_shape": [
+                1,
+                32,
+                1,
+                1,
+                16,
+                16
+            ],
+            "bias_shape": [
+                9
+            ],
+            "s_in": 0.15616799902728223,
+            "s_w": 0.003998897676392803,
+            "s_b": 0.0006244998484371125,
+            "s_out": 0.4587574155311885,
+            "M0": 22839,
+            "shift_n": 24,
+            "w_hex_file": "layer21_fc_w.hex",
+            "b_hex_file": "layer21_fc_b.hex",
+            "ddr_byte_offset": 11166720,
+            "ddr_byte_length": 8192
+        }
+    ],
+    "block_quant_configs": [
+        {
+            "unit_name": "STEM_CONV1",
+            "M_conv1": 32338,
+            "s_conv1": 23,
+            "M_conv2": 0,
+            "s_conv2": 0,
+            "M_sc": 0,
+            "s_sc": 0
+        },
+        {
+            "unit_name": "S1B0",
+            "M_conv1": 24828,
+            "s_conv1": 24,
+            "M_conv2": 22251,
+            "s_conv2": 24,
+            "M_sc": 25381,
+            "s_sc": 15
+        },
+        {
+            "unit_name": "S1B1",
+            "M_conv1": 24182,
+            "s_conv1": 24,
+            "M_conv2": 21934,
+            "s_conv2": 25,
+            "M_sc": 28065,
+            "s_sc": 15
+        },
+        {
+            "unit_name": "S2B0",
+            "M_conv1": 23570,
+            "s_conv1": 24,
+            "M_conv2": 17647,
+            "s_conv2": 25,
+            "M_sc": 26038,
+            "s_sc": 23
+        },
+        {
+            "unit_name": "S2B1",
+            "M_conv1": 19153,
+            "s_conv1": 24,
+            "M_conv2": 25235,
+            "s_conv2": 26,
+            "M_sc": 18757,
+            "s_sc": 14
+        },
+        {
+            "unit_name": "S3B0",
+            "M_conv1": 18379,
+            "s_conv1": 24,
+            "M_conv2": 24613,
+            "s_conv2": 26,
+            "M_sc": 23949,
+            "s_sc": 23
+        },
+        {
+            "unit_name": "S3B1",
+            "M_conv1": 19636,
+            "s_conv1": 24,
+            "M_conv2": 26647,
+            "s_conv2": 27,
+            "M_sc": 19404,
+            "s_sc": 14
+        },
+        {
+            "unit_name": "S4B0",
+            "M_conv1": 24161,
+            "s_conv1": 25,
+            "M_conv2": 19746,
+            "s_conv2": 26,
+            "M_sc": 18821,
+            "s_sc": 23
+        },
+        {
+            "unit_name": "S4B1",
+            "M_conv1": 23020,
+            "s_conv1": 26,
+            "M_conv2": 27088,
+            "s_conv2": 27,
+            "M_sc": 24653,
+            "s_sc": 15
+        },
+        {
+            "unit_name": "FC_OUT",
+            "M_conv1": 22839,
+            "s_conv1": 24,
+            "M_conv2": 0,
+            "s_conv2": 0,
+            "M_sc": 0,
+            "s_sc": 0
+        }
+    ]
+}
