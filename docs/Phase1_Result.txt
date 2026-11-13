@@ -1,0 +1,194 @@
+PS C:\Users\truong\working\RESNET-18-FPGA> .\.venv\Scripts\python.exe software/preprocessing/01_wm811k_preprocess.py
+========================================================================
+  BƯỚC 1: TIỀN XỬ LÝ DỮ LIỆU WM-811K (64x64 NEAREST-NEIGHBOR INT8)
+========================================================================
+[1/4] Đang đọc dữ liệu từ: C:\Users\truong\working\RESNET-18-FPGA\software\data\LSWMD.pkl ...
+      Tổng số tấm wafer trong file gốc: 811,457
+[2/4] Đang lọc nhãn và thực hiện Nearest-Neighbor resize về 64x64...
+
+      Phân bố dữ liệu gốc sau khi lọc:
+        - Lớp 0 (Center    ): 4,294 mẫu
+        - Lớp 1 (Donut     ): 555 mẫu
+        - Lớp 2 (Edge-Loc  ): 5,189 mẫu
+        - Lớp 3 (Edge-Ring ): 9,680 mẫu
+        - Lớp 4 (Loc       ): 3,593 mẫu
+        - Lớp 5 (Random    ): 866 mẫu
+        - Lớp 6 (Scratch   ): 1,193 mẫu
+        - Lớp 7 (Near-full ): 149 mẫu
+        - Lớp 8 (none      ): 147,431 mẫu
+
+[3/4] Cân bằng các lớp về ~8,000 mẫu/lớp (bảo toàn giá trị (0, 64, 127))...
+
+      Đã lưu bộ dữ liệu chuẩn hóa tại: C:\Users\truong\working\RESNET-18-FPGA\software\data\wm811k_64x64_int8.npz
+        - Train:      (50400, 1, 64, 64) | One-hot: (50400, 9)
+        - Validation: (10800, 1, 64, 64) | One-hot: (10800, 9)
+        - Test:       (10800, 1, 64, 64) | One-hot: (10800, 9)
+        - Tập giá trị INT8 hợp lệ: [0, 64, 127]
+
+[4/4] Xuất 9 file mẫu Wafer INT8 (.hex) cho RTL Testbench tại: C:\Users\truong\working\RESNET-18-FPGA\software\Explicit_Model\hw_vectors\test_samples
+      -> Đã xuất: input_wafer_0_Center.hex         | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_1_Donut.hex          | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_2_Edge-Loc.hex       | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_3_Edge-Ring.hex      | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_4_Loc.hex            | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_5_Random.hex         | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_6_Scratch.hex        | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_7_Near-full.hex      | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+      -> Đã xuất: input_wafer_8_none.hex           | Shape NHWC: (64, 64, 1) | Values: [0, 64, 127]
+
+Hoàn tất Bước 1!
+PS C:\Users\truong\working\RESNET-18-FPGA> .\.venv\Scripts\python.exe software/Training_Model/02_resnet18_Modified_train.py
+========================================================================
+  BƯỚC 2: HUẤN LUYỆN MODIFIED RESNET-18 (64x64x1) & BATCHNORM FOLDING
+========================================================================
+  Device:          cuda
+  Input Format:    64x64x1 (INT8 {0, 64, 127} * INPUT_SCALE=1/127)
+  Epochs:          25
+  Batch Size:      64
+  Learning Rate:   0.001
+========================================================================
+
+  Khởi tạo thành công ResNet18Modified | Tổng tham số: 11,172,297
+
+  [1/3] Bắt đầu huấn luyện FP32...
+Epoch 01 [Train]: 100%|██| 788/788 [28:36<00:00,  2.18s/it, loss=0.3314, acc=75.76%]
+  Epoch [01/25] Train Loss: 0.6572 | Train Acc: 75.76% | Val Loss: 0.6629 | Val Acc: 79.31% | Time: 1807.2s
+Epoch 02 [Train]: 100%|████████████████████████████████████████| 788/788 [21:23<00:00,  1.63s/it, loss=0.2246, acc=88.33%]
+  Epoch [02/25] Train Loss: 0.3391 | Train Acc: 88.33% | Val Loss: 0.3337 | Val Acc: 88.69% | Time: 1385.1s
+Epoch 03 [Train]: 100%|████████████████████████████████████████| 788/788 [24:18<00:00,  1.85s/it, loss=0.2624, acc=90.43%]
+  Epoch [03/25] Train Loss: 0.2779 | Train Acc: 90.43% | Val Loss: 0.3228 | Val Acc: 88.13% | Time: 1543.1s
+Epoch 04 [Train]: 100%|████████████████████████████████████████| 788/788 [19:37<00:00,  1.49s/it, loss=0.3984, acc=91.46%]
+  Epoch [04/25] Train Loss: 0.2479 | Train Acc: 91.46% | Val Loss: 0.3078 | Val Acc: 90.12% | Time: 1268.7s
+Epoch 05 [Train]: 100%|████████████████████████████████████████| 788/788 [20:33<00:00,  1.57s/it, loss=0.5133, acc=92.24%]
+  Epoch [05/25] Train Loss: 0.2218 | Train Acc: 92.24% | Val Loss: 0.2243 | Val Acc: 91.94% | Time: 1316.4s
+Epoch 06 [Train]: 100%|████████████████████████████████████████| 788/788 [23:08<00:00,  1.76s/it, loss=0.1307, acc=92.75%]
+  Epoch [06/25] Train Loss: 0.2053 | Train Acc: 92.75% | Val Loss: 0.2414 | Val Acc: 91.53% | Time: 1482.6s
+Epoch 07 [Train]: 100%|████████████████████████████████████████| 788/788 [25:07<00:00,  1.91s/it, loss=0.3549, acc=93.34%]
+  Epoch [07/25] Train Loss: 0.1913 | Train Acc: 93.34% | Val Loss: 0.2088 | Val Acc: 92.71% | Time: 1610.6s
+Epoch 08 [Train]: 100%|████████████████████████████████████████| 788/788 [22:30<00:00,  1.71s/it, loss=0.1216, acc=93.80%]
+  Epoch [08/25] Train Loss: 0.1782 | Train Acc: 93.80% | Val Loss: 0.1800 | Val Acc: 93.79% | Time: 1434.7s
+Epoch 09 [Train]: 100%|████████████████████████████████████████| 788/788 [20:44<00:00,  1.58s/it, loss=0.1193, acc=94.33%]
+  Epoch [09/25] Train Loss: 0.1636 | Train Acc: 94.33% | Val Loss: 0.1692 | Val Acc: 94.19% | Time: 1312.8s
+Epoch 10 [Train]: 100%|████████████████████████████████████████| 788/788 [22:25<00:00,  1.71s/it, loss=0.0429, acc=94.75%]
+  Epoch [10/25] Train Loss: 0.1502 | Train Acc: 94.75% | Val Loss: 0.1726 | Val Acc: 93.70% | Time: 1433.4s
+Epoch 11 [Train]: 100%|████████████████████████████████████████| 788/788 [22:36<00:00,  1.72s/it, loss=0.1105, acc=95.09%]
+  Epoch [11/25] Train Loss: 0.1404 | Train Acc: 95.09% | Val Loss: 0.1557 | Val Acc: 94.38% | Time: 1455.1s
+Epoch 12 [Train]: 100%|████████████████████████████████████████| 788/788 [21:57<00:00,  1.67s/it, loss=0.0925, acc=95.58%]
+  Epoch [12/25] Train Loss: 0.1285 | Train Acc: 95.58% | Val Loss: 0.1374 | Val Acc: 95.09% | Time: 1391.8s
+Epoch 13 [Train]: 100%|████████████████████████████████████████| 788/788 [21:12<00:00,  1.61s/it, loss=0.0548, acc=95.88%]
+  Epoch [13/25] Train Loss: 0.1169 | Train Acc: 95.88% | Val Loss: 0.1274 | Val Acc: 95.66% | Time: 1364.7s
+Epoch 14 [Train]: 100%|████████████████████████████████████████| 788/788 [20:09<00:00,  1.53s/it, loss=0.0736, acc=96.23%]
+  Epoch [14/25] Train Loss: 0.1077 | Train Acc: 96.23% | Val Loss: 0.1192 | Val Acc: 95.86% | Time: 1279.7s
+Epoch 15 [Train]: 100%|████████████████████████████████████████| 788/788 [19:59<00:00,  1.52s/it, loss=0.1336, acc=96.55%]
+  Epoch [15/25] Train Loss: 0.0979 | Train Acc: 96.55% | Val Loss: 0.1111 | Val Acc: 96.10% | Time: 1289.0s
+Epoch 16 [Train]: 100%|████████████████████████████████████████| 788/788 [21:27<00:00,  1.63s/it, loss=0.0619, acc=96.98%]
+  Epoch [16/25] Train Loss: 0.0877 | Train Acc: 96.98% | Val Loss: 0.1053 | Val Acc: 96.27% | Time: 1362.4s
+Epoch 17 [Train]: 100%|████████████████████████████████████████| 788/788 [20:25<00:00,  1.56s/it, loss=0.0375, acc=97.29%]
+  Epoch [17/25] Train Loss: 0.0793 | Train Acc: 97.29% | Val Loss: 0.1033 | Val Acc: 96.54% | Time: 1299.7s
+Epoch 18 [Train]: 100%|████████████████████████████████████████| 788/788 [19:54<00:00,  1.52s/it, loss=0.3492, acc=97.52%]
+  Epoch [18/25] Train Loss: 0.0732 | Train Acc: 97.52% | Val Loss: 0.0953 | Val Acc: 96.79% | Time: 1286.6s
+Epoch 19 [Train]: 100%|████████████████████████████████████████| 788/788 [22:44<00:00,  1.73s/it, loss=0.0179, acc=97.82%]
+  Epoch [19/25] Train Loss: 0.0650 | Train Acc: 97.82% | Val Loss: 0.0868 | Val Acc: 97.20% | Time: 1447.4s
+Epoch 20 [Train]: 100%|████████████████████████████████████████| 788/788 [17:14<00:00,  1.31s/it, loss=0.0668, acc=98.03%]
+  Epoch [20/25] Train Loss: 0.0584 | Train Acc: 98.03% | Val Loss: 0.0832 | Val Acc: 97.26% | Time: 1100.0s
+Epoch 21 [Train]: 100%|████████████████████████████████████████| 788/788 [16:16<00:00,  1.24s/it, loss=0.1509, acc=98.20%]
+  Epoch [21/25] Train Loss: 0.0538 | Train Acc: 98.20% | Val Loss: 0.0774 | Val Acc: 97.41% | Time: 1045.2s
+Epoch 22 [Train]: 100%|████████████████████████████████████████| 788/788 [17:57<00:00,  1.37s/it, loss=0.1624, acc=98.39%]
+  Epoch [22/25] Train Loss: 0.0492 | Train Acc: 98.39% | Val Loss: 0.0761 | Val Acc: 97.47% | Time: 1152.7s
+Epoch 23 [Train]: 100%|████████████████████████████████████████| 788/788 [20:16<00:00,  1.54s/it, loss=0.0424, acc=98.47%]
+  Epoch [23/25] Train Loss: 0.0468 | Train Acc: 98.47% | Val Loss: 0.0748 | Val Acc: 97.58% | Time: 1291.8s
+Epoch 24 [Train]: 100%|████████████████████████████████████████| 788/788 [19:03<00:00,  1.45s/it, loss=0.0220, acc=98.53%]
+  Epoch [24/25] Train Loss: 0.0448 | Train Acc: 98.53% | Val Loss: 0.0737 | Val Acc: 97.69% | Time: 1215.2s
+Epoch 25 [Train]: 100%|████████████████████████████████████████| 788/788 [18:04<00:00,  1.38s/it, loss=0.0181, acc=98.57%]
+  Epoch [25/25] Train Loss: 0.0428 | Train Acc: 98.57% | Val Loss: 0.0733 | Val Acc: 97.64% | Time: 1157.1s
+
+  [2/3] Kết quả FP32 (Trước khi gộp BN) trên tập Test: 97.55%
+
+  [3/3] Đang thực hiện BatchNorm Folding (gộp BN vào 20 lớp Conv)...
+        Sai số tuyệt đối lớn nhất (Max |FP32 - Folded|): 6.90e-03
+        Độ chính xác Test sau khi gộp BatchNorm:         97.55%
+
+  Đã lưu trọng số đã gộp BatchNorm tại: C:\Users\truong\working\RESNET-18-FPGA\software\Training_Model\checkpoints\resnet18_fp32_folded.pth
+  Hoàn tất Bước 2!
+PS C:\Users\truong\working\RESNET-18-FPGA> .\.venv\Scripts\python.exe software/Low_Precision_Model/03_quantizer_export.py
+========================================================================
+  BƯỚC 3: LƯỢNG TỬ HÓA ĐỐI XỨNG INT8/INT32 & XUẤT VECTOR PHẦN CỨNG
+========================================================================
+[1/2] Đang hiệu chuẩn hệ số tỷ lệ Activation (S_y) trên 1024 mẫu...
+[2/2] Đang lượng tử hóa và đóng gói Trọng số theo Tiling (Tm=16, Tn=16)...
+
+  [Layer 01] stem_conv1         | W: [64, 1, 3, 3]      -> Tiled: [4, 1, 3, 3, 16, 16]   | M0=32338 , n=23
+  [Layer 02] s1b0_conv1         | W: [64, 64, 3, 3]     -> Tiled: [4, 4, 3, 3, 16, 16]   | M0=24828 , n=24
+  [Layer 03] s1b0_conv2         | W: [64, 64, 3, 3]     -> Tiled: [4, 4, 3, 3, 16, 16]   | M0=22251 , n=24
+  [Layer 04] s1b1_conv1         | W: [64, 64, 3, 3]     -> Tiled: [4, 4, 3, 3, 16, 16]   | M0=24182 , n=24
+  [Layer 05] s1b1_conv2         | W: [64, 64, 3, 3]     -> Tiled: [4, 4, 3, 3, 16, 16]   | M0=21934 , n=25
+  [Layer 06] s2b0_conv1         | W: [128, 64, 3, 3]    -> Tiled: [8, 4, 3, 3, 16, 16]   | M0=23570 , n=24
+  [Layer 07] s2b0_conv2         | W: [128, 128, 3, 3]   -> Tiled: [8, 8, 3, 3, 16, 16]   | M0=17647 , n=25
+  [Layer 08] s2b0_shortcut      | W: [128, 64, 1, 1]    -> Tiled: [8, 4, 1, 1, 16, 16]   | M0=26038 , n=23
+  [Layer 09] s2b1_conv1         | W: [128, 128, 3, 3]   -> Tiled: [8, 8, 3, 3, 16, 16]   | M0=19153 , n=24
+  [Layer 10] s2b1_conv2         | W: [128, 128, 3, 3]   -> Tiled: [8, 8, 3, 3, 16, 16]   | M0=25235 , n=26
+  [Layer 11] s3b0_conv1         | W: [256, 128, 3, 3]   -> Tiled: [16, 8, 3, 3, 16, 16]  | M0=18379 , n=24
+  [Layer 12] s3b0_conv2         | W: [256, 256, 3, 3]   -> Tiled: [16, 16, 3, 3, 16, 16] | M0=24613 , n=26
+  [Layer 13] s3b0_shortcut      | W: [256, 128, 1, 1]   -> Tiled: [16, 8, 1, 1, 16, 16]  | M0=23949 , n=23
+  [Layer 14] s3b1_conv1         | W: [256, 256, 3, 3]   -> Tiled: [16, 16, 3, 3, 16, 16] | M0=19636 , n=24
+  [Layer 15] s3b1_conv2         | W: [256, 256, 3, 3]   -> Tiled: [16, 16, 3, 3, 16, 16] | M0=26647 , n=27
+  [Layer 16] s4b0_conv1         | W: [512, 256, 3, 3]   -> Tiled: [32, 16, 3, 3, 16, 16] | M0=24161 , n=25
+  [Layer 17] s4b0_conv2         | W: [512, 512, 3, 3]   -> Tiled: [32, 32, 3, 3, 16, 16] | M0=19746 , n=26
+  [Layer 18] s4b0_shortcut      | W: [512, 256, 1, 1]   -> Tiled: [32, 16, 1, 1, 16, 16] | M0=18821 , n=23
+  [Layer 19] s4b1_conv1         | W: [512, 512, 3, 3]   -> Tiled: [32, 32, 3, 3, 16, 16] | M0=23020 , n=26
+
+  Đã xuất thành công:
+    - 21 file Trọng số INT8 (.hex): C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\hw_vectors\weights_hex
+    - 21 file Bias INT32 (.hex):    C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\hw_vectors\bias_hex
+    - Cấu hình Verilog Header:      C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\hw_vectors\quant_config.vh & C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\hw_vectors\quant_config.hex
+    - File DDR3 Binary (11,174,912 bytes): C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\hw_vectors\ddr_weights_pack.bin
+    - Tham số cho Bit-Accurate Sim: C:\Users\truong\working\RESNET-18-FPGA\software\Low_Precision_Model\checkpoints\quantized_resnet18_int8.npz
+
+Hoàn tất Bước 3!
+PS C:\Users\truong\working\RESNET-18-FPGA> .\.venv\Scripts\python.exe software/Explicit_Model/04_bit_accurate_emulator.py
+========================================================================
+  BƯỚC 4: BỘ MÔ PHỎNG PHẦN CỨNG BIT-ACCURATE & XUẤT GOLDEN FEATURE MAPS
+========================================================================
+[1/3] Đang trích xuất Golden Feature Maps (chuẩn NHWC) tại: C:\Users\truong\working\RESNET-18-FPGA\software\Explicit_Model\hw_vectors\golden_fmaps ...
+      -> layer01_stem_conv1_out.hex:<34 | NCHW: [1, 64, 64, 64]    | NHWC: [64, 64, 64] (262,144 bytes)
+      -> layer02_s1b0_conv1_out.hex:<34 | NCHW: [1, 64, 64, 64]    | NHWC: [64, 64, 64] (262,144 bytes)
+      -> layer03_s1b0_block_out_out.hex:<34 | NCHW: [1, 64, 64, 64]    | NHWC: [64, 64, 64] (262,144 bytes)
+      -> layer04_s1b1_conv1_out.hex:<34 | NCHW: [1, 64, 64, 64]    | NHWC: [64, 64, 64] (262,144 bytes)
+      -> layer05_s1b1_block_out_out.hex:<34 | NCHW: [1, 64, 64, 64]    | NHWC: [64, 64, 64] (262,144 bytes)
+      -> layer06_s2b0_conv1_out.hex:<34 | NCHW: [1, 128, 32, 32]   | NHWC: [32, 32, 128] (131,072 bytes)
+      -> layer07_s2b0_shortcut_out.hex:<34 | NCHW: [1, 128, 32, 32]   | NHWC: [32, 32, 128] (131,072 bytes)
+      -> layer08_s2b0_block_out_out.hex:<34 | NCHW: [1, 128, 32, 32]   | NHWC: [32, 32, 128] (131,072 bytes)
+      -> layer09_s2b1_conv1_out.hex:<34 | NCHW: [1, 128, 32, 32]   | NHWC: [32, 32, 128] (131,072 bytes)
+      -> layer10_s2b1_block_out_out.hex:<34 | NCHW: [1, 128, 32, 32]   | NHWC: [32, 32, 128] (131,072 bytes)
+      -> layer11_s3b0_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer12_s3b0_shortcut_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer14_s3b1_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer15_s3b1_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer16_s4b0_conv1_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> layer17_s4b0_shortcut_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> layer18_s4b0_block_out_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer14_s3b1_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer15_s3b1_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer16_s4b0_conv1_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer14_s3b1_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer14_s3b1_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer15_s3b1_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer13_s3b0_block_out_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+      -> layer14_s3b1_conv1_out.hex:<34 | NCHW: [1, 256, 16, 16]   | NHWC: [16, 16, 256] (65,536 bytes)
+ bytes)
+      -> layer19_s4b1_conv1_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> layer20_s4b1_block_out_out.hex:<34 | NCHW: [1, 512, 8, 8]     | NHWC: [8, 8, 512] (32,768 bytes)
+      -> gap_out_out.hex:<34 | NCHW: [1, 512]           | NHWC: [1, 512] (512 bytes)
+      -> layer21_fc_out.hex:<34 | NCHW: [1, 9]             | NHWC: [1, 9] (9 bytes)
+
+[2/3] Đang chạy Bit-Accurate Integer Emulator trên 10,800 mẫu Test...
+      Độ chính xác Bit-Accurate Emulator: 97.55% | Macro F1: 97.53% (27531.6s)
+
+[3/3] Đang tạo báo cáo kiểm định tại: C:\Users\truong\working\RESNET-18-FPGA\software\Explicit_Model\Phase1_Verification_Report.md ...
+Hoàn tất Bước 4!
+PS C:\Users\truong\working\RESNET-18-FPGA>

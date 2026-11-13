@@ -61,20 +61,3 @@ Tài liệu này mô tả chuẩn đối chiếu **Phase 1 Golden Model** của 
 
 ---
 
-## 4. Hướng dẫn Chạy Toàn bộ Quy trình (4 Bước)
-
-```bash
-cd phase1_golden_model
-
-# Bước 1: Lọc dữ liệu từ wafers.pkl / LSWMD.pkl, resize Nearest-Neighbor 64x64 và xuất 9 mẫu .hex
-python 01_wm811k_preprocess.py
-
-# Bước 2: Huấn luyện Modified ResNet-18 (64x64x1) và thực hiện BatchNorm Folding
-python 02_resnet18_Modified_train.py --epochs 25 --batch_size 64
-
-# Bước 3: Lượng tử hóa đối xứng INT8/INT32, tính (M0, n) và xuất toàn bộ .hex / .vh / .bin
-python 03_quantizer_export.py --tm 16 --tn 16
-
-# Bước 4: Chạy Bộ Mô phỏng Phần cứng Bit-Accurate, xuất Golden Feature Maps & cập nhật Báo cáo
-python 04_bit_accurate_emulator.py
-```
