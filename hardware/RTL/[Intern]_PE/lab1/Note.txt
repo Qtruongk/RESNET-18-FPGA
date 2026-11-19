@@ -1,0 +1,5 @@
+Học gì ở đây: khi mà chia stage ra ở đây thì chúng ta gom vào trong một chu kỳ 
+sự khác biệt ở đây là gì trong always
+
+2 always ==> thì 2 cái này diễn ra đồng thời
+1 always 2 task ==> mỗi task nối tiếp nhau

@@ -29,3 +29,15 @@ Thumbs.db
 .vscode/
 .idea/
 
+# EDA Simulation Artifacts
+work/
+*.wlf
+*.vstf
+vsim.dbg
+vsim.dbg/
+transcript
+*.log
+.log
+modelsim.ini
+
+

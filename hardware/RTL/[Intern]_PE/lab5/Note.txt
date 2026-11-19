@@ -1,0 +1,11 @@
+Học gì ở đây: khi mà chia stage ra ở đây thì chúng ta gom vào trong một chu kỳ 
+sự khác biệt ở đây là gì trong always
+
+2 always ==> thì 2 cái này diễn ra đồng thời
+1 always 2 task ==> mỗi task nối tiếp nhau
+
+Giả sử bạn có 2 khối PE nằm cạnh nhau trên cùng 1 hàng: $PE(0,0)$ (bên trái) và $PE(0,1)$ (bên phải).
+Nhiệm vụ của chúng là tính 2 ô kết quả 
+$C_{00}$ và $C_{01}$:$PE(0,0)$ cần tính:
+ $C_{00} = \mathbf{A_{00}} \times B_{00} + \mathbf{A_{01}} \times B_{10}
+ $$PE(0,1)$ cần tính: $C_{01} = \mathbf{A_{00}} \times B_{01} + \mathbf{A_{01}} \times B_{11}$
